@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="CTRL" Id="{d9c2011f-1e4a-400d-9e32-c2699aa1565f}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	state_axis: INT;
+	working_counter_status AT %I*: BYTE;
+	error AT %I*: INT;
+	start					: BOOL := FALSE; 		// Start al movimento
+	stop					: BOOL := FALSE;		// Stop al movimento
+	opmode AT%Q*		 	: SINT := 8; 			// Modo operativo
+	in_opmode AT%I* 		: SINT; 				// Modo operativo letto da giunto
+	status_word AT %I*: UINT;
+	control_word AT %Q*: UINT;
+	sdo: BOOL := FALSE;
+	a: BOOL := TRUE;
+	b: BOOL;
+	read_error: BOOL;
+	set_up: BOOL := TRUE;
+	wait: BOOL := TRUE;
+	active: BOOL := TRUE;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

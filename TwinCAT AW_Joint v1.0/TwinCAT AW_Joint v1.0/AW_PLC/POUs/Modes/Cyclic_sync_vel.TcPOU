@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="Cyclic_sync_vel" Id="{4308e13d-a949-461b-986d-75952e055186}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Cyclic_sync_vel
+VAR
+	timer_bool: BOOL := FALSE;
+	timer_test: TON;
+	back: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//CYCLIC SYNC VELOCITY
+CASE CTRL.state_axis OF
+	
+    0: // State 0: Switch on request
+		IF (timer_bool = FALSE) THEN
+			CTRL.control_word	:= 16#6;        // Reset status
+			
+			timer_test(IN:=FALSE,PT:=T#3S);
+			IF ((CTRL.status_word.0 = 1) AND (CTRL.status_word.4 = 1) AND (CTRL.error = 0) AND CTRL.start) THEN
+				CTRL.control_word	:= 16#7;        // Switch on
+				INIT();
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			IF (timer_bool)THEN
+				timer_test(IN:=TRUE);
+				IF ( timer_test.Q = TRUE ) THEN
+					CTRL.start		:= FALSE;
+					CTRL.state_axis	:= 10;
+					timer_bool 		:= FALSE;  
+				END_IF
+			END_IF
+		END_IF
+	
+    10:
+		IF(timer_bool = FALSE) THEN
+			IF ((CTRL.error = 0) AND (CTRL.status_word.1 = 1) AND (CTRL.in_opmode = MODE.CYCLIC_SYNC_VEL)) THEN           
+				TRAJ.target_vel_mrpm	:= 0;
+				CTRL.control_word := 16#0F;
+				timer_test(IN:=FALSE,PT:=T#3S);
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			timer_test(IN:=TRUE);
+			IF ( timer_test.Q = TRUE ) THEN
+				CTRL.state_axis	:= 20;
+				timer_bool	:= FALSE;  
+			END_IF			
+		END_IF
+		
+	20:
+		TRAJ.target_vel_mrpm	:= 0;
+		IF ((CTRL.error = 0) AND (CTRL.in_opmode = MODE.CYCLIC_SYNC_VEL)) THEN
+			TRAJ.tempo 		:= 0;
+			IF( back = TRUE) THEN
+				back			:= FALSE;
+				CTRL.state_axis	:= 30;
+			ELSE
+				back			:= TRUE;
+				CTRL.state_axis	:= 40;
+			END_IF
+		END_IF
+	
+	30: 
+		FWPoly4();  
+		IF (TRAJ.tempo >= 1) THEN
+			TRAJ.status := FALSE;
+			IF (CTRL.stop) THEN
+				CTRL.state_axis := 50;
+			ELSE
+				CTRL.state_axis := 20;
+			END_IF
+		ELSE
+			TRAJ.tempo := TRAJ.tempo + TRAJ.delta_t;
+		END_IF  
+         
+    40: 
+		BWPoly4();
+		IF (TRAJ.tempo >= 1) THEN
+			TRAJ.status := FALSE;
+			IF (CTRL.stop) THEN
+				CTRL.state_axis := 50;
+			ELSE
+				CTRL.state_axis := 20;
+			END_IF
+		ELSE
+			TRAJ.tempo := TRAJ.tempo + TRAJ.delta_t;
+		END_IF    
+               
+	50: // Stato 70: richiesta switch off
+		CTRL.control_word	:= 0; 
+		CTRL.start 		:= 0;
+		CTRL.stop  		:= 0;
+		CTRL.state_axis := 0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="Cyclic_sync_vel">
+      <LineId Id="89" Count="27" />
+      <LineId Id="118" Count="26" />
+      <LineId Id="146" Count="12" />
+      <LineId Id="160" Count="15" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="MODE" Id="{2042494b-fdfe-48b2-a1c9-6f135f938f09}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL CONSTANT
+	PROFILE_POSITION	: SINT := 1;
+	PROFILE_VELOCITY	: SINT := 3;
+	TORQUE_PROFILE		: SINT := 4;
+	CYCLIC_SYNC_POS		: SINT := 8;
+	CYCLIC_SYNC_VEL		: SINT := 9;
+	CYCLIC_SYNC_TORQ	: SINT := 10;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

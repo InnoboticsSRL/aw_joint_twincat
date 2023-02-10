@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FWPoly3" Id="{7fd7c6c0-f2b4-4f3f-9653-8bd63c306a95}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FWPoly3
+
+VAR
+	a: DINT;
+	b: DINT;
+	c: DINT;
+	tempo_2: LREAL;
+	tempo_3: LREAL;
+	tempo_4: LREAL;
+	torque_per_thousand: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (TRAJ.tempo = 0) THEN
+	TRAJ.v_max_rpm_low	:= (UDINT_TO_LREAL(TRAJ.speed_selector_rpm) / MOTOR.GEAR_RATIO);
+	TRAJ.periodo_ms 	:= (ABS(TRAJ.position_selector_deg) * 15 * 1000) / (8 * TRAJ.v_max_rpm_low * 6) ; // millisecondi
+	TRAJ.delta_t 		:= 1 / (TRAJ.periodo_ms); 
+	TRAJ.status			:= TRUE;
+	
+	torque_per_thousand := LREAL_TO_INT(TRAJ.torque_selector_Nm*1000/MOTOR.RATED_TORQUE_NM);
+	a := 64 * torque_per_thousand;
+	b := -96 * torque_per_thousand;
+	c := 32 * torque_per_thousand;
+
+END_IF
+
+IF (TRAJ.status = TRUE) THEN
+	tempo_2 := TRAJ.tempo * TRAJ.tempo;
+	tempo_3 := tempo_2 * TRAJ.tempo;
+	TRAJ.target_torque_per_thousand := LREAL_TO_INT(a * tempo_3 + b * tempo_2 + c * TRAJ.tempo)/3;
+ELSE
+	TRAJ.error := PLC_ERROR.TRAJ_NO_SETUP;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FWPoly3">
+      <LineId Id="28" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="31" Count="2" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="34" Count="2" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="38" Count="4" />
+      <LineId Id="44" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

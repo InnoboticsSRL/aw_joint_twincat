@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="Velocity_profile" Id="{62c8f836-ef00-4a75-9ec4-e5c2178c22d6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Velocity_profile
+
+VAR
+	v_max_mrpm: DINT;
+	back: BOOL := TRUE;
+	timer_test: TON;
+	timer_bool: BOOL := FALSE;
+	fb_coe_write: INT;
+	profile_velocity: DINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// PROFILE VELOCITY MODE
+CASE CTRL.state_axis OF
+
+    0: // State 0: Switch on request
+		IF (timer_bool = FALSE) THEN
+			CTRL.control_word	:= 16#6;        // Reset status
+			TRAJ.target_vel_mrpm := 0;
+			timer_test(IN:=FALSE,PT:=T#3S);
+			IF ((CTRL.status_word.0 = 1) AND (CTRL.status_word.4 = 1) AND (CTRL.error = 0) AND CTRL.start) THEN
+				CTRL.control_word	:= 16#7;        // Switch on
+				INIT();
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			IF (timer_bool)THEN
+				timer_test(IN:=TRUE);
+				IF ( timer_test.Q = TRUE ) THEN
+					CTRL.start		:= FALSE;
+					CTRL.state_axis	:= 10;
+					timer_bool 		:= FALSE;  
+				END_IF
+			END_IF
+		END_IF
+        
+    10: // State 10: verify operation enable flag and that the operation mode is correctly set on the driver
+		IF(timer_bool = FALSE) THEN
+			IF ((CTRL.error = 0) AND (CTRL.status_word.1 = 1) AND (CTRL.in_opmode = MODE.PROFILE_VELOCITY)) THEN           
+				v_max_mrpm 	:= UDINT_TO_DINT(TRAJ.speed_selector_rpm * 1000)/MOTOR.GEAR_RATIO;
+				IF( back = TRUE) THEN
+					TRAJ.target_vel_mrpm    := - v_max_mrpm;
+					back                    := FALSE;
+				ELSE
+					TRAJ.target_vel_mrpm    := v_max_mrpm;
+					back                    := TRUE;
+				END_IF
+				//CTRL.control_word.3     := 1; // operation enable
+				CTRL.control_word := 16#0F;
+				timer_test(IN:=FALSE,PT:=T#3S);
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			timer_test(IN:=TRUE);
+			IF ( timer_test.Q = TRUE ) THEN
+				CTRL.state_axis	:= 20;
+				timer_bool		:= FALSE;  
+			END_IF			
+		END_IF
+		
+    20: // State 20: wait target reached and swap target profile
+        IF ( CTRL.status_word.10 = 1 ) THEN
+            IF (CTRL.stop) THEN
+                CTRL.state_axis     := 30;
+                back                := FALSE;
+            ELSE
+                CTRL.state_axis     := 10;
+                CTRL.status_word.8  := 1; // halt flag on
+            END_IF
+        END_IF
+
+    30: // State 30: switch off request 
+        CTRL.start			:= 0;
+        CTRL.stop			:= 0;
+		TRAJ.target_vel_mrpm:= 0;
+		IF(ABS(MOTOR.actual_vel_rpm) < SDO.velocity_window)THEN
+			CTRL.control_word	:= 0;
+        	CTRL.state_axis		:= 0;
+		END_IF
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="Velocity_profile">
+      <LineId Id="384" Count="0" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="641" Count="0" />
+      <LineId Id="760" Count="6" />
+      <LineId Id="768" Count="11" />
+      <LineId Id="451" Count="0" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="477" Count="0" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="714" Count="6" />
+      <LineId Id="400" Count="0" />
+      <LineId Id="493" Count="3" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="482" Count="3" />
+      <LineId Id="481" Count="0" />
+      <LineId Id="479" Count="0" />
+      <LineId Id="515" Count="0" />
+      <LineId Id="414" Count="11" />
+      <LineId Id="427" Count="1" />
+      <LineId Id="605" Count="2" />
+      <LineId Id="609" Count="0" />
+      <LineId Id="608" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

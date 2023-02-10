@@ -1,0 +1,258 @@
+<?xml version="1.0"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.29">
+	<ImageDatas>
+		<ImageData Id="1000">424de6000000000000007600000028000000100000000e00000001000400000000007000000000000000000000001000000010000000520fe4005513e4006d34e8007a47ea008b5eed009870ef00ae8ff200b498f300bea4f500cab6f700d4c3f80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000333333333333100099999999999a610011124544444691000017988888883000001975555555555500026777777777770000000000000000000000000000000000000000000000000000000000000000</ImageData>
+	</ImageDatas>
+	<Project ProjectGUID="{E947E81A-14EF-4569-AF39-29CA4892AD26}" Target64Bit="true" ShowHideConfigurations="#x3c7">
+		<System>
+			<Settings MaxCpus="8">
+				<Cpu CpuId="1"/>
+			</Settings>
+			<Licenses>
+				<Target>
+					<ManualSelect>{4AB869F0-145C-4EB0-878E-69BB1793E116}</ManualSelect>
+				</Target>
+			</Licenses>
+			<Tasks>
+				<Task Id="3" Priority="20" CycleTime="10000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{8BC7E9C4-570B-490A-8D60-A497BE292131}" Name="AW_PLC" PrjFilePath="AW_PLC\AW_PLC.plcproj" TmcFilePath="AW_PLC\AW_PLC.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="AW_PLC\AW_PLC.tmc">
+					<Name>AW_PLC Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Vars VarGrpType="1">
+						<Name>PlcTask Inputs</Name>
+						<Var>
+							<Name>CTRL.working_counter_status</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>CTRL.error</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>CTRL.in_opmode</Name>
+							<Comment><![CDATA[ Modo operativo letto da giunto]]></Comment>
+							<Type>SINT</Type>
+						</Var>
+						<Var>
+							<Name>CTRL.status_word</Name>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>MOTOR.actual_vel_rpm</Name>
+							<Comment><![CDATA[ ]]></Comment>
+							<Type>DINT</Type>
+						</Var>
+						<Var>
+							<Name>MOTOR.actual_torque</Name>
+							<Comment><![CDATA[ In per thousand of the nominal torque]]></Comment>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MOTOR.actual_pos_inc</Name>
+							<Comment><![CDATA[ Posizione reale [cnt]]]></Comment>
+							<Type>DINT</Type>
+						</Var>
+						<Var>
+							<Name>TRAJ.speed_demand_value</Name>
+							<Type>DINT</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2" AreaNo="1">
+						<Name>PlcTask Outputs</Name>
+						<Var>
+							<Name>CTRL.opmode</Name>
+							<Comment><![CDATA[ Modo operativo]]></Comment>
+							<Type>SINT</Type>
+						</Var>
+						<Var>
+							<Name>CTRL.control_word</Name>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>TRAJ.target_pos_inc</Name>
+							<Comment><![CDATA[ Posizione target [cnt]]]></Comment>
+							<Type>DINT</Type>
+						</Var>
+						<Var>
+							<Name>TRAJ.target_vel_mrpm</Name>
+							<Comment><![CDATA[ Velocità target [cnt]]]></Comment>
+							<Type>DINT</Type>
+						</Var>
+						<Var>
+							<Name>TRAJ.target_torque_per_thousand</Name>
+							<Type>INT</Type>
+						</Var>
+					</Vars>
+					<Contexts>
+						<Context>
+							<Id NeedCalleeCall="true">0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010030</OTCID>
+							</ManualConfig>
+							<Priority>20</Priority>
+							<CycleTime>1000000</CycleTime>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502001"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+		<Io>
+			<Device Id="3" DevType="111" DevFlags="#x0003" AmsPort="28675" AmsNetId="192.168.12.90.4.1" RemoteName="Dispositivo 3 (EtherCAT)" InfoImageId="3">
+				<Name>Dispositivo 3 (EtherCAT)</Name>
+				<AddressInfo>
+					<Pnp>
+						<DeviceDesc>Ethernet (Realtek PCIe GbE Family Controller)</DeviceDesc>
+						<DeviceName>\DEVICE\{A5041B84-142C-45BC-9081-7BF628A6D819}</DeviceName>
+						<DeviceData>c025a5447ddc</DeviceData>
+					</Pnp>
+				</AddressInfo>
+				<Image Id="2" AddrType="9" ImageType="3">
+					<Name>Immagine di processo</Name>
+				</Image>
+				<Box Id="2" BoxType="9099" BoxFlags="#x00000020">
+					<Name>Drive 2 (CiA402 Motor Control Device)</Name>
+					<ImageId>1000</ImageId>
+					<EtherCAT SlaveType="2" PdiType="#x0e08" MboxDataLinkLayer="true" CycleMBoxPolling="true" CoeType="15" FoeType="1" VendorId="#x000022d2" ProductCode="#x00000201" RevisionNo="#x0a000002" InfoDataAddr="true" InfoDataSoeDS401="true" TimeoutMailbox2="6000" PortPhys="17" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="SOMANET CiA402 Drive" Desc="CiA402 Motor Control Device" PortABoxInfo="#x00ffffff">
+						<SyncMan>001000042600010001000000000000000004001026010000</SyncMan>
+						<SyncMan>001400042200010002000000000000000004001422010000</SyncMan>
+						<SyncMan>001823006400010003000000000000000800001864010000</SyncMan>
+						<SyncMan>001c2f002000010004000000000000000800001c20010000</SyncMan>
+						<Fmmu>0000000000000000001800020100000001000000000000000000000000000000</Fmmu>
+						<Fmmu>0000000000000000001c00010100000002000000000000000000000000000000</Fmmu>
+						<BootStrapData>0010000400140004</BootStrapData>
+						<DcMode>4672656572756e000000000000000000467265652052756e000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000</DcMode>
+						<DcMode>4443000000000000000000000000000044432d53796e6368726f6e00000000000000000000000000000000000000000040420f000000000000000000ffff00030100000000000000000000000000000000000000000000000000000000000000</DcMode>
+						<Pdo Name="TxPDO Mapping 1" Index="#x1a00" Flags="#x0000" SyncMan="3">
+							<Entry Name="Statusword" Index="#x6041">
+								<Type>UINT</Type>
+							</Entry>
+							<Entry Name="Modes of operation display" Index="#x6061">
+								<Type>SINT</Type>
+							</Entry>
+							<Entry Name="Position actual value" Index="#x6064">
+								<Type>DINT</Type>
+							</Entry>
+							<Entry Name="Velocity actual value" Index="#x606c">
+								<Type>DINT</Type>
+							</Entry>
+							<Entry Name="Torque actual value" Index="#x6077">
+								<Type>INT</Type>
+							</Entry>
+						</Pdo>
+						<Pdo Name="TxPDO Mapping 2" Index="#x1a01" Flags="#x0000" SyncMan="3">
+							<Entry Name="Analog input 1" Index="#x2401">
+								<Type>UINT</Type>
+							</Entry>
+							<Entry Name="Analog input 2" Index="#x2402">
+								<Type>UINT</Type>
+							</Entry>
+							<Entry Name="Analog input 3" Index="#x2403">
+								<Type>UINT</Type>
+							</Entry>
+							<Entry Name="Analog input 4" Index="#x2404">
+								<Type>UINT</Type>
+							</Entry>
+							<Entry Name="Tuning status" Index="#x2702">
+								<Type>UDINT</Type>
+							</Entry>
+						</Pdo>
+						<Pdo Name="TxPDO Mapping 3" Index="#x1a02" Flags="#x0000" SyncMan="3">
+							<Entry Name="Digital inputs" Index="#x60fd">
+								<Type>UDINT</Type>
+							</Entry>
+						</Pdo>
+						<Pdo Name="TxPDO Mapping 4" Index="#x1a03" Flags="#x0000" SyncMan="3">
+							<Entry Name="User MISO" Index="#x2704">
+								<Type>UDINT</Type>
+							</Entry>
+							<Entry Name="Timestamp" Index="#x20f0">
+								<Type>UDINT</Type>
+							</Entry>
+							<Entry Name="Position demand internal value" Index="#x60fc">
+								<Type>DINT</Type>
+							</Entry>
+							<Entry Name="Velocity demand value" Index="#x606b">
+								<Type>DINT</Type>
+							</Entry>
+							<Entry Name="Torque demand" Index="#x6074">
+								<Type>INT</Type>
+							</Entry>
+						</Pdo>
+						<Pdo Name="RxPDO Mapping 1" Index="#x1600" InOut="1" Flags="#x0000" SyncMan="2">
+							<Entry Name="Controlword" Index="#x6040">
+								<Type>UINT</Type>
+							</Entry>
+							<Entry Name="Modes of operation" Index="#x6060">
+								<Type>SINT</Type>
+							</Entry>
+							<Entry Name="Target Torque" Index="#x6071">
+								<Type>INT</Type>
+							</Entry>
+							<Entry Name="Target position" Index="#x607a">
+								<Type>DINT</Type>
+							</Entry>
+							<Entry Name="Target velocity" Index="#x60ff">
+								<Type>DINT</Type>
+							</Entry>
+							<Entry Name="Torque offset" Index="#x60b2">
+								<Type>INT</Type>
+							</Entry>
+							<Entry Name="Tuning command" Index="#x2701">
+								<Type>UDINT</Type>
+							</Entry>
+						</Pdo>
+						<Pdo Name="RxPDO Mapping 2" Index="#x1601" InOut="1" Flags="#x0000" SyncMan="2">
+							<Entry Name="Physical outputs" Index="#x60fe" Sub="#x01">
+								<Type>UDINT</Type>
+							</Entry>
+							<Entry Name="Bit mask" Index="#x60fe" Sub="#x02">
+								<Type>UDINT</Type>
+							</Entry>
+						</Pdo>
+						<Pdo Name="RxPDO Mapping 3" Index="#x1602" InOut="1" Flags="#x0000" SyncMan="2">
+							<Entry Name="User MOSI" Index="#x2703">
+								<Type>UDINT</Type>
+							</Entry>
+							<Entry Name="Velocity offset" Index="#x60b1">
+								<Type>DINT</Type>
+							</Entry>
+						</Pdo>
+						<CoeProfile ProfileNo="402"/>
+					</EtherCAT>
+				</Box>
+				<EtherCAT/>
+			</Device>
+		</Io>
+	</Project>
+	<Mappings>
+		<MappingInfo Identifier="{00000000-2001-0850-0020-500820000403}" Id="#x02030010"/>
+		<OwnerA Name="TIPC^AW_PLC^AW_PLC Instance">
+			<OwnerB Name="TIID^Device 3 (EtherCAT)">
+				<Link VarA="PlcTask Inputs^CTRL.working_counter_status" VarB="SyncUnits^&lt;default&gt;^PlcTask^WcState^WcState"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Drive 2 (CiA402 Motor Control Device)">
+				<Link VarA="PlcTask Inputs^CTRL.in_opmode" VarB="TxPDO Mapping 1^Modes of operation display"/>
+				<Link VarA="PlcTask Inputs^CTRL.status_word" VarB="TxPDO Mapping 1^Statusword"/>
+				<Link VarA="PlcTask Inputs^MOTOR.actual_pos_inc" VarB="TxPDO Mapping 1^Position actual value"/>
+				<Link VarA="PlcTask Inputs^MOTOR.actual_torque" VarB="TxPDO Mapping 1^Torque actual value"/>
+				<Link VarA="PlcTask Inputs^MOTOR.actual_vel_rpm" VarB="TxPDO Mapping 1^Velocity actual value"/>
+				<Link VarA="PlcTask Inputs^TRAJ.speed_demand_value" VarB="TxPDO Mapping 4^Velocity demand value"/>
+				<Link VarA="PlcTask Outputs^CTRL.control_word" VarB="RxPDO Mapping 1^Controlword"/>
+				<Link VarA="PlcTask Outputs^CTRL.opmode" VarB="RxPDO Mapping 1^Modes of operation"/>
+				<Link VarA="PlcTask Outputs^TRAJ.target_pos_inc" VarB="RxPDO Mapping 1^Target position"/>
+				<Link VarA="PlcTask Outputs^TRAJ.target_torque_per_thousand" VarB="RxPDO Mapping 1^Target Torque"/>
+				<Link VarA="PlcTask Outputs^TRAJ.target_vel_mrpm" VarB="RxPDO Mapping 1^Target velocity"/>
+			</OwnerB>
+		</OwnerA>
+	</Mappings>
+</TcSmProject>

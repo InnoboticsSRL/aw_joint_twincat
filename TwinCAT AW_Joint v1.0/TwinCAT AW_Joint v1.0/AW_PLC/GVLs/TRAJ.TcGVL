@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="TRAJ" Id="{2634034e-e058-4111-be09-35b8d5ac636a}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	end_pos_inc					: DINT := 0; 		// Posizione finale
+	target_pos_inc AT %Q* 	: DINT; 			// Posizione target [cnt]
+	// Velocità target [cnt]
+	target_vel_mrpm AT %Q*	: DINT;
+	start_pos_inc				: DINT := 0; 		// Posizione di start
+	tempo					: LREAL := 0; 		// tempo [ms]
+	offset_inc: DINT;
+	periodo_ms					: LREAL := 1; 		// Durata poly5 [s]	
+	delta_t					: LREAL; 			// Delta t per ogni ciclo
+	v_max_incs					: DINT; 	// Velocità massima raggiungibile 
+	status: BOOL := 0;
+	error: UINT := 0;
+	v_max_rpm_low: LREAL;
+	
+	position_selector_deg				: DINT := 180; 	// Offset posizione poly5 [deg]
+	target_torque_per_thousand AT %Q*: INT;
+	speed_selector_rpm					: UDINT := 500; 	// Velocità massima raggiungibile a freddo 1600 [rpm]
+	// [Nm]
+	torque_selector_Nm: LREAL := 0.40;
+	speed_demand_value AT %I*: DINT;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
