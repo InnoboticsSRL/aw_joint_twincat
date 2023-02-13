@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="ENC" Id="{48964c22-f1c2-40bb-a46e-d5fff9600e3a}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+		// Approssimato da 2^20/360
+	DEG_TO_INC: DINT := 2912;
+	RPM_TO_INCS: DINT := 17476;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

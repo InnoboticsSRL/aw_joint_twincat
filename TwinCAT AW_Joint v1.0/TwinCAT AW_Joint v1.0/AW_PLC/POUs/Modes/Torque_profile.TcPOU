@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="Torque_profile" Id="{1a62a2fb-e201-414f-ac04-a710b3225a71}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Torque_profile
+VAR
+	back: BOOL;
+	torque_per_thousand: INT;
+	timer_bool: BOOL := FALSE;
+	timer_test: TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//PROFILE TORQUE MODE
+CASE CTRL.state_axis OF
+	
+    0: // State 0: Switch on request
+		IF (timer_bool = FALSE) THEN
+			CTRL.control_word	:= 16#6;        // Reset status
+			TRAJ.target_torque_per_thousand := 0;
+			timer_test(IN:=FALSE,PT:=T#3S);
+			IF ((CTRL.status_word.0 = 1) AND (CTRL.status_word.4 = 1) AND (CTRL.error = 0) AND CTRL.start) THEN
+				CTRL.control_word	:= 16#7;        // Switch on
+				INIT();
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			IF (timer_bool)THEN
+				timer_test(IN:=TRUE);
+				IF ( timer_test.Q = TRUE ) THEN
+					CTRL.start		:= FALSE;
+					CTRL.state_axis	:= 10;
+					timer_bool 		:= FALSE;  
+				END_IF
+			END_IF
+		END_IF
+
+    10: // State 10: verify operation enable flag and that the operation mode is correctly set on the driver
+		IF(timer_bool = FALSE) THEN
+			IF ((CTRL.error = 0) AND (CTRL.status_word.1 = 1) AND (CTRL.in_opmode = MODE.TORQUE_PROFILE)) THEN          
+				torque_per_thousand := LREAL_TO_INT((TRAJ.torque_selector_Nm*1000)/MOTOR.RATED_TORQUE_NM);
+				IF( back = TRUE) THEN
+					TRAJ.target_torque_per_thousand    := -torque_per_thousand;
+					back                     := FALSE;
+				ELSE
+					TRAJ.target_torque_per_thousand    := torque_per_thousand;
+					back                     := TRUE;
+				END_IF
+				//CTRL.control_word.3     := 1; // operation enable
+				CTRL.control_word := 16#0F;
+				timer_test(IN:=FALSE,PT:=T#3S);
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			timer_test(IN:=TRUE);
+			IF ( timer_test.Q = TRUE ) THEN
+				CTRL.state_axis	:= 20;
+				timer_bool		:= FALSE;  
+			END_IF			
+		END_IF		
+			
+    20: // State 20: wait target reached and swap target position
+        IF ( CTRL.status_word.10 = 1 ) THEN
+            IF (CTRL.stop) THEN
+                CTRL.state_axis     := 30;
+                back                 := FALSE;
+            ELSE
+                CTRL.state_axis     := 10;
+                CTRL.status_word.8  := 1; // halt flag on
+            END_IF
+        END_IF
+
+    30: // State 30: switch off request
+        CTRL.start			:= 0;
+        CTRL.stop			:= 0;
+		TRAJ.target_torque_per_thousand	:= 0;
+		IF(ABS(MOTOR.actual_torque) < UINT_TO_INT(SDO.torque_window))THEN
+			CTRL.control_word	:= 0;
+        	CTRL.state_axis		:= 0;
+		END_IF
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="Torque_profile">
+      <LineId Id="10" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="159" Count="6" />
+      <LineId Id="167" Count="11" />
+      <LineId Id="25" Count="2" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="32" Count="6" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="124" Count="1" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="98" Count="4" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="44" Count="11" />
+      <LineId Id="133" Count="5" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

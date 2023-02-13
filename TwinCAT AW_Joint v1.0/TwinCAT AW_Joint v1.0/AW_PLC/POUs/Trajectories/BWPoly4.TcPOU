@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="BWPoly4" Id="{e9da8c91-208b-47c9-a411-28240c1998b2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM BWPoly4
+VAR
+	a: LREAL;
+	b: LREAL;
+	c: LREAL;
+	tempo_2: LREAL;
+	tempo_3: LREAL;
+	tempo_4: LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (TRAJ.tempo = 0) THEN
+	TRAJ.v_max_rpm_low	:= (UDINT_TO_LREAL(TRAJ.speed_selector_rpm) / MOTOR.GEAR_RATIO);
+	TRAJ.periodo_ms 	:= (ABS(TRAJ.position_selector_deg) * 15 * 1000) / (8 * TRAJ.v_max_rpm_low * 6) ; // millisecondi	
+	TRAJ.delta_t 		:= 1 / (TRAJ.periodo_ms); 
+	TRAJ.status			:= TRUE;
+	
+	a := -16 * TRAJ.v_max_rpm_low * 1000;
+	b := 32 * TRAJ.v_max_rpm_low * 1000;
+	c := -16 * TRAJ.v_max_rpm_low * 1000;
+
+END_IF
+
+IF (TRAJ.status = TRUE) THEN
+	tempo_2 := TRAJ.tempo * TRAJ.tempo;
+	tempo_3 := tempo_2 * TRAJ.tempo;
+	tempo_4 := tempo_3 * TRAJ.tempo;
+	TRAJ.target_vel_mrpm := LREAL_TO_DINT(a * tempo_4 + b * tempo_3 + c * tempo_2);
+ELSE
+	TRAJ.error := PLC_ERROR.TRAJ_NO_SETUP;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="BWPoly4">
+      <LineId Id="6" Count="1" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="10" Count="15" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

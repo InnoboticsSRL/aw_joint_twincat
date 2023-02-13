@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="Position_profile" Id="{99d353d6-6ecb-42a3-896d-b673b5e06abc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Position_profile
+VAR
+	back: BOOL := TRUE;
+	timer_test: TON;
+	timer_bool: BOOL := FALSE;
+	
+	fb_coe_write           : FB_EcCoESdoWrite;
+	profile_velocity: UDINT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//PROFILE POSITION MODE
+CASE CTRL.state_axis OF
+
+	0:
+		IF (CTRL.start AND timer_bool = FALSE) THEN	
+			timer_test(IN:=FALSE,PT:=T#3S);
+			timer_bool := TRUE;
+			fb_coe_write(bExecute := FALSE);
+			INIT();	
+		ELSE
+			IF (CTRL.start) THEN
+				profile_velocity 	:= TRAJ.speed_selector_rpm * 1000/DINT_TO_UDINT(MOTOR.GEAR_RATIO);
+				fb_coe_write(
+					sNetId     := SDO.userNetId,
+					nSlaveAddr := SDO.userSlaveAddr,
+					nIndex     := 16#6081,
+					nSubIndex  := 0,
+					pSrcBuf    := ADR(profile_velocity),
+					cbBufLen   := SIZEOF(profile_velocity),
+					bExecute   := TRUE);
+
+				IF(timer_bool = TRUE) THEN
+					//fb_coe_write(bExecute := FALSE);
+					IF (NOT fb_coe_write.bBusy) THEN
+						timer_test(IN:=TRUE);
+						IF ( timer_test.Q = TRUE ) THEN
+							CTRL.start		:= FALSE;
+							CTRL.state_axis	:= 5;
+							timer_bool 		:= FALSE;  
+						END_IF		
+					END_IF	
+				END_IF
+			END_IF
+		END_IF
+	
+    5: // State 5: Switch on request
+		IF (timer_bool = FALSE) THEN
+			CTRL.control_word       := 16#6;        // Reset status
+			TRAJ.target_pos_inc     := MOTOR.actual_pos_inc;
+			timer_test(IN:=FALSE,PT:=T#3S);
+			IF ((CTRL.status_word.0 = 1) AND (CTRL.status_word.4 = 1) AND (CTRL.error = 0)) THEN
+				CTRL.control_word	:= 16#7;        // Switch on
+				TRAJ.target_pos_inc	:= MOTOR.actual_pos_inc;	
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			timer_test(IN:=TRUE);
+			IF ( timer_test.Q = TRUE ) THEN
+				CTRL.state_axis	:= 10;
+				timer_bool 		:= FALSE;  
+			END_IF
+		END_IF
+					
+    10: // State 20: verify operation enable flag and that the operation mode is correctly set on the driver
+		IF (timer_bool = FALSE) THEN
+			IF ((CTRL.error = 0) AND (CTRL.status_word.1 = 1) AND (CTRL.in_opmode = MODE.PROFILE_POSITION)) THEN
+				CTRL.start		:= FALSE;
+				TRAJ.offset_inc	:= (TRAJ.position_selector_deg * ENC.DEG_TO_INC);
+				IF( back = TRUE) THEN
+					TRAJ.target_pos_inc	:= 0;
+					back				:= FALSE;
+				ELSE
+					TRAJ.target_pos_inc	:= TRAJ.offset_inc;
+					back				:= TRUE;
+				END_IF
+				//CTRL.control_word.3     := 1; // operation enable
+				CTRL.control_word := 16#0F;
+				timer_test(IN:=FALSE,PT:=T#3S);
+				timer_bool := TRUE;
+			END_IF
+		ELSE
+			timer_test(IN:=TRUE);
+			IF ( timer_test.Q = TRUE ) THEN
+				CTRL.state_axis	:= 15;
+				timer_bool		:= FALSE;  
+			END_IF
+		END_IF
+	
+	15:
+		IF (timer_bool = FALSE) THEN
+			CTRL.control_word := 16#3F;
+			//CTRL.control_word.4     := 1; // new set-point
+			//CTRL.control_word.5     := 1; // change set immediately
+			timer_test(IN:=FALSE,PT:=T#1S);
+			timer_bool := TRUE;
+		ELSE
+			timer_test(IN:=TRUE);
+			IF ( timer_test.Q = TRUE ) THEN
+				CTRL.state_axis	:= 20;
+				timer_bool		:= FALSE;  
+			END_IF
+		END_IF
+
+    20: // State 30: verify the set-point acknowledge
+        IF ((CTRL.error = 0)  AND (CTRL.status_word.12 = 1)) THEN
+            CTRL.state_axis         := 30;
+        END_IF
+
+    30: // State 40: wait target reached and swap target position
+        IF ( CTRL.status_word.10 = 1 ) THEN
+            IF (CTRL.stop) THEN
+                CTRL.state_axis     := 40;
+                back                := FALSE;
+            ELSE
+                CTRL.state_axis     := 10;
+            END_IF
+//This section has been commented out due to errors and a subsequently reset after sudden stops.
+//		ELSE 
+//			IF (CTRL.stop) THEN
+//				CTRL.state_axis     := 40;
+//                back                := FALSE;
+//			END_IF
+        END_IF
+
+    40: // State 50: switch off request
+        CTRL.control_word	:= 0; 
+        CTRL.start			:= 0;
+        CTRL.stop			:= 0;
+        CTRL.state_axis		:= 0;
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="Position_profile">
+      <LineId Id="399" Count="4" />
+      <LineId Id="522" Count="2" />
+      <LineId Id="520" Count="0" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="526" Count="0" />
+      <LineId Id="529" Count="7" />
+      <LineId Id="527" Count="1" />
+      <LineId Id="418" Count="0" />
+      <LineId Id="518" Count="0" />
+      <LineId Id="515" Count="0" />
+      <LineId Id="419" Count="5" />
+      <LineId Id="516" Count="0" />
+      <LineId Id="425" Count="0" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="426" Count="9" />
+      <LineId Id="437" Count="4" />
+      <LineId Id="443" Count="70" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

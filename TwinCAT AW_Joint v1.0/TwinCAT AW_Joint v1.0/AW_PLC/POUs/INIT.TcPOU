@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="INIT" Id="{fe257ffe-7e53-4cf4-b90e-41c71454b463}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM INIT
+
+VAR
+	once: BOOL := FALSE;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF(once=FALSE)THEN
+	ENC.DEG_TO_INC := UDINT_TO_DINT(SDO.enc_resolution/360);
+	ENC.RPM_TO_INCS:= UDINT_TO_DINT(SDO.enc_resolution/60);
+	MOTOR.GEAR_RATIO := UDINT_TO_DINT(SDO.motor_revolutions/SDO.shaft_revolutions);
+	MOTOR.RATED_TORQUE_NM 	:= DINT_TO_LREAL(SDO.motor_rated_torque)/1000.0;	
+	MOTOR.RATED_SPEED_RPM	:= SDO.max_motor_speed/1000;
+	once := TRUE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="INIT">
+      <LineId Id="26" Count="0" />
+      <LineId Id="16" Count="2" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

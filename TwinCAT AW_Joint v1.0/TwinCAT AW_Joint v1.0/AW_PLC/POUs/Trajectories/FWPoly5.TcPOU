@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FWPoly5" Id="{3d22dc31-5464-4d9d-bae8-efc22a8c7a69}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM FWPoly5
+VAR
+	a						: LREAL; 			// Coefficiente "a" poly5
+	b						: LREAL; 			// Coefficiente "b" poly5
+	c						: LREAL; 			// Coefficiente "c" poly5
+	tempo_2					: LREAL; 			// Tempo ^2
+	tempo_3					: LREAL; 			// Tempo ^3
+	tempo_4					: LREAL; 			// Tempo ^4
+	tempo_5					: LREAL;	 		// Tempo ^5
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (TRAJ.tempo = 0) THEN
+	TRAJ.offset_inc		:= (TRAJ.position_selector_deg * ENC.DEG_TO_INC);
+	TRAJ.v_max_rpm_low	:= (UDINT_TO_LREAL(TRAJ.speed_selector_rpm) / MOTOR.GEAR_RATIO);
+	TRAJ.periodo_ms 	:= (ABS(TRAJ.position_selector_deg) * 15 * 1000) / (8 * TRAJ.v_max_rpm_low * 6) ; // millisecondi
+	TRAJ.status			:= TRUE;
+	TRAJ.delta_t 		:= 1 / (TRAJ.periodo_ms); 
+	
+	a := 6 * TRAJ.offset_inc;
+	b := -15 * TRAJ.offset_inc;
+	c := 10 * TRAJ.offset_inc;
+	
+	TRAJ.start_pos_inc := MOTOR.actual_pos_inc;
+	TRAJ.end_pos_inc := (MOTOR.actual_pos_inc + TRAJ.offset_inc); 
+END_IF
+
+IF (TRAJ.status = TRUE) THEN
+	tempo_2 := TRAJ.tempo * TRAJ.tempo;
+	tempo_3 := tempo_2 * TRAJ.tempo;
+	tempo_4 := tempo_3 * TRAJ.tempo;
+	tempo_5 := tempo_4 * TRAJ.tempo;
+	TRAJ.target_pos_inc := (LREAL_TO_DINT(a * tempo_5 + b * tempo_4 + c * tempo_3) + TRAJ.start_pos_inc);
+ELSE
+	TRAJ.error := PLC_ERROR.TRAJ_NO_SETUP;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FWPoly5">
+      <LineId Id="245" Count="1" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="212" Count="5" />
+      <LineId Id="219" Count="9" />
+      <LineId Id="192" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,465 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="SDO" Id="{6bef7f16-c7cb-4d9e-b65d-8861e98dd3cd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SDO
+VAR
+	
+	userNetId             	: T_AmsNetId 		:= '192.168.12.90.4.1'; 	// Have to be entered
+   	userSlaveAddr         	: UINT 				:= 1001;     				// Have to be entered
+	//CoE reading 
+	fb_coe_read1           	: FB_EcCoESdoRead;  						// Function Block for reading from CoE
+	fb_coe_read2           	: FB_EcCoESdoRead;
+	fb_coe_read3           	: FB_EcCoESdoRead;
+	fb_coe_read4           	: FB_EcCoESdoRead;
+	fb_coe_read5           	: FB_EcCoESdoRead;
+	fb_coe_read6           	: FB_EcCoESdoRead;
+	fb_coe_read7           	: FB_EcCoESdoRead;
+	fb_coe_read8           	: FB_EcCoESdoRead;
+	
+	fb_coe_write1           : FB_EcCoESdoWrite;
+	fb_coe_write2           : FB_EcCoESdoWrite;
+	fb_coe_write3           : FB_EcCoESdoWrite;
+	fb_coe_write4           : FB_EcCoESdoWrite;
+	fb_coe_write5           : FB_EcCoESdoWrite;
+	fb_coe_write6           : FB_EcCoESdoWrite;
+	fb_coe_write7           : FB_EcCoESdoWrite;
+	fb_coe_write8           : FB_EcCoESdoWrite;
+	fb_coe_write9           : FB_EcCoESdoWrite;
+	fb_coe_write10          : FB_EcCoESdoWrite;
+	fb_coe_write11          : FB_EcCoESdoWrite;
+	fb_coe_write12          : FB_EcCoESdoWrite;
+	fb_coe_write13          : FB_EcCoESdoWrite;
+	fb_coe_write14          : FB_EcCoESdoWrite;
+	
+	motor_revolutions		: UDINT;
+	shaft_revolutions		: UDINT;
+	enc_resolution			: UDINT := 1048576;
+	motor_rated_torque		: DINT;
+	max_motor_speed			: UDINT;	
+	
+	profile_velocity		: UDINT := 0;
+	profile_acceleration	: UDINT := 20000;
+	profile_deceleration	: UDINT := 20000;
+	quick_stop_deceleration	: UDINT := 10000;
+	position_window			: UDINT := 100;
+	velocity_window			: UINT := 500;
+	velocity_window_time	: UINT := 0;
+	torque_window			: UINT := 100;
+	torque_window_time		: UINT := 0;
+	torque_slope			: UDINT := 100;
+	written_speed			: UDINT;
+	count: INT := 0;
+	bExecuteworld: BOOL := FALSE;
+	error_report: STRING;
+	position_filter_type: USINT := 1;
+	position_filter_frequency: UDINT := 200;
+	r_position_filter_type: USINT;
+	r_position_filter_frequency: UDINT;
+	velocity_filter_type: USINT := 1;
+	velocity_filter_frequency: UDINT := 100;
+END_VAR
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//****************** SDO *****************
+IF (CTRL.read_error = TRUE) THEN
+	fb_coe_read6(bExecute := FALSE);
+	fb_coe_read6(
+			sNetId		:= userNetId, 
+			nSlaveAddr	:= userSlaveAddr, 
+			nSubIndex	:= 1, 
+			nIndex		:= 16#203F,
+			pDstBuf		:= ADR(error_report), 
+			cbBufLen    := SIZEOF(error_report), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+	CTRL.read_error := FALSE;
+END_IF
+
+IF (CTRL.sdo = FALSE AND HMI.error_light = FALSE)  THEN
+
+    // read
+	IF ( count = 0 ) THEN
+		fb_coe_read1(bExecute := FALSE);
+		fb_coe_read2(bExecute := FALSE);
+		fb_coe_read3(bExecute := FALSE);
+		fb_coe_read4(bExecute := FALSE);
+		fb_coe_read5(bExecute := FALSE);
+		fb_coe_write1(bExecute := FALSE);
+		fb_coe_write2(bExecute := FALSE);
+		fb_coe_write3(bExecute := FALSE);
+		fb_coe_write4(bExecute := FALSE);
+		fb_coe_write5(bExecute := FALSE);
+		fb_coe_write6(bExecute := FALSE);
+		fb_coe_write7(bExecute := FALSE);
+		fb_coe_write8(bExecute := FALSE);
+		fb_coe_write9(bExecute := FALSE);
+		fb_coe_write10(bExecute := FALSE);
+		fb_coe_write11(bExecute := FALSE);
+		fb_coe_write12(bExecute := FALSE);
+		fb_coe_write13(bExecute := FALSE);
+		fb_coe_write14(bExecute := FALSE);
+		count := count +1;
+		STATE_MACHINE.timer(IN:=FALSE,PT:=T#4S);
+	END_IF
+
+	
+	IF ( NOT bExecuteworld AND count = 1) THEN
+		fb_coe_read1(
+			sNetId        := userNetId, 
+			nSlaveAddr    := userSlaveAddr, 
+			nSubIndex    := 1, 
+			nIndex        := 16#6091,
+			pDstBuf        := ADR(motor_revolutions), 
+			cbBufLen    := SIZEOF(motor_revolutions), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+	
+		IF (NOT fb_coe_read1.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read1(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 2) THEN
+		fb_coe_read2(
+			sNetId        := userNetId, 
+			nSlaveAddr    := userSlaveAddr, 
+			nSubIndex    := 2, 
+			nIndex        := 16#6091,
+			pDstBuf     := ADR(shaft_revolutions), 
+			cbBufLen    := SIZEOF(shaft_revolutions), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);	
+			
+		IF (NOT fb_coe_read2.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read2(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 3) THEN
+		fb_coe_read3(
+			sNetId        := userNetId, 
+			nSlaveAddr    := userSlaveAddr, 
+			nSubIndex    := 3, 
+			nIndex        := 16#2110,
+			pDstBuf        := ADR(enc_resolution), 
+			cbBufLen    := SIZEOF(enc_resolution), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+	
+		IF (NOT fb_coe_read3.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read3(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 4) THEN
+		fb_coe_read4(
+			sNetId      := userNetId, 
+			nSlaveAddr  := userSlaveAddr, 
+			nSubIndex   := 0, 
+			nIndex      := 16#6076,
+			pDstBuf     := ADR(motor_rated_torque), 
+			cbBufLen    := SIZEOF(motor_rated_torque), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+		IF (NOT fb_coe_read4.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read4(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 5) THEN
+		fb_coe_read5(
+			sNetId      := userNetId, 
+			nSlaveAddr  := userSlaveAddr, 
+			nSubIndex   := 0, 
+			nIndex      := 16#6080,
+			pDstBuf     := ADR(max_motor_speed), 
+			cbBufLen    := SIZEOF(max_motor_speed), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+		IF (NOT fb_coe_read5.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read5(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 6) THEN
+		fb_coe_read7(
+			sNetId      := userNetId, 
+			nSlaveAddr  := userSlaveAddr, 
+			nSubIndex   := 1, 
+			nIndex      := 16#2022,
+			pDstBuf     := ADR(r_position_filter_type), 
+			cbBufLen    := SIZEOF(r_position_filter_type), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+		IF (NOT fb_coe_read7.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read7(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 7) THEN
+		fb_coe_read8(
+			sNetId      := userNetId, 
+			nSlaveAddr  := userSlaveAddr, 
+			nSubIndex   := 2, 
+			nIndex      := 16#2022,
+			pDstBuf     := ADR(r_position_filter_frequency), 
+			cbBufLen    := SIZEOF(r_position_filter_frequency), 
+			bExecute    := TRUE, 
+			tTimeout    := T#1S);
+		IF (NOT fb_coe_read8.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_read8(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	
+    //write
+	
+	IF ( NOT bExecuteworld AND count = 8) THEN
+		//defined by user panel
+		profile_velocity 	:= TRAJ.speed_selector_rpm * 1000/DINT_TO_UDINT(MOTOR.GEAR_RATIO);
+		fb_coe_write1(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#6081,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(profile_velocity),
+			cbBufLen   := SIZEOF(profile_velocity),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write1.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write1(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 9) THEN
+		fb_coe_write2(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#6083,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(profile_acceleration),
+			cbBufLen   := SIZEOF(profile_acceleration),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write2.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write2(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 10) THEN
+		fb_coe_write3(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#6084,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(profile_deceleration),
+			cbBufLen   := SIZEOF(profile_deceleration),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write3.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write3(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 11) THEN
+		fb_coe_write4(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#6085,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(quick_stop_deceleration),
+			cbBufLen   := SIZEOF(quick_stop_deceleration),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write4.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write4(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 12) THEN
+		fb_coe_write5(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#6067,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(position_window),
+			cbBufLen   := SIZEOF(position_window),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write5.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write5(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 13) THEN
+		fb_coe_write6(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#606D,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(velocity_window),
+			cbBufLen   := SIZEOF(velocity_window),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write6.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write6(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 14) THEN
+		fb_coe_write7(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#606E,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(velocity_window_time),
+			cbBufLen   := SIZEOF(velocity_window_time),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write7.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write7(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 15) THEN
+		fb_coe_write8(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#2014,
+			nSubIndex  := 1,
+			pSrcBuf    := ADR(torque_window),
+			cbBufLen   := SIZEOF(torque_window),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write8.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write8(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 16) THEN
+		fb_coe_write9(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#2014,
+			nSubIndex  := 2,
+			pSrcBuf    := ADR(torque_window_time),
+			cbBufLen   := SIZEOF(torque_window_time),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write9.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write9(bExecute := FALSE);
+			count := count + 1;
+		END_IF
+	END_IF
+	IF ( NOT bExecuteworld AND count = 17) THEN
+		fb_coe_write10(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#6087,
+			nSubIndex  := 0,
+			pSrcBuf    := ADR(torque_slope),
+			cbBufLen   := SIZEOF(torque_slope),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write10.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write10(bExecute := FALSE);
+			count := count + 1;
+		END_IF		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 18) THEN
+		fb_coe_write11(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#2022,
+			nSubIndex  := 1,
+			pSrcBuf    := ADR(position_filter_type),
+			cbBufLen   := SIZEOF(position_filter_type),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write11.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write11(bExecute := FALSE);
+			count := count + 1;
+		END_IF		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 19) THEN
+		fb_coe_write12(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#2022,
+			nSubIndex  := 2,
+			pSrcBuf    := ADR(position_filter_frequency),
+			cbBufLen   := SIZEOF(position_filter_frequency),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write12.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write12(bExecute := FALSE);
+			count := count + 1;
+		END_IF		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 20) THEN
+		fb_coe_write13(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#2021,
+			nSubIndex  := 1,
+			pSrcBuf    := ADR(velocity_filter_type),
+			cbBufLen   := SIZEOF(velocity_filter_type),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write13.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write13(bExecute := FALSE);
+			count := count + 1;
+		END_IF		
+	END_IF
+	IF ( NOT bExecuteworld AND count = 21) THEN
+		fb_coe_write14(
+			sNetId     := userNetId,
+			nSlaveAddr := userSlaveAddr,
+			nIndex     := 16#2021,
+			nSubIndex  := 2,
+			pSrcBuf    := ADR(velocity_filter_frequency),
+			cbBufLen   := SIZEOF(velocity_filter_frequency),
+			bExecute   := TRUE);
+		IF (NOT fb_coe_write14.bBusy) THEN
+			bExecuteworld := FALSE;
+			fb_coe_write14(bExecute := FALSE);
+			CTRL.sdo     := TRUE;
+			count := 0;
+		END_IF		
+	END_IF		
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="SDO">
+      <LineId Id="5603" Count="35" />
+      <LineId Id="6414" Count="1" />
+      <LineId Id="5639" Count="90" />
+      <LineId Id="5731" Count="0" />
+      <LineId Id="6165" Count="30" />
+      <LineId Id="5732" Count="0" />
+      <LineId Id="6196" Count="0" />
+      <LineId Id="5733" Count="150" />
+      <LineId Id="5886" Count="14" />
+      <LineId Id="5903" Count="2" />
+      <LineId Id="6420" Count="13" />
+      <LineId Id="6419" Count="0" />
+      <LineId Id="6435" Count="13" />
+      <LineId Id="6434" Count="0" />
+      <LineId Id="5906" Count="11" />
+      <LineId Id="5919" Count="3" />
+      <LineId Id="376" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

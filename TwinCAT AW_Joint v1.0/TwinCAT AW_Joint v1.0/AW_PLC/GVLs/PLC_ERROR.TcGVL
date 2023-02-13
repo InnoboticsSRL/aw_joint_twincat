@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="PLC_ERROR" Id="{627e0893-accc-4de8-a6bf-324a7c4c2489}" ParameterList="True">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL CONSTANT
+END_VAR
+VAR_GLOBAL CONSTANT
+	TRAJ_NO_SETUP: UINT := 1;
+	MODE_NO_SETUP: INT := 2;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

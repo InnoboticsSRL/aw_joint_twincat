@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="MAIN" Id="{ee9132d2-9909-442e-a723-ffe0f98e05bb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[HMI();
+SDO();
+STATE_MACHINE();]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="3130" Count="0" />
+      <LineId Id="3134" Count="0" />
+      <LineId Id="3244" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="HMI" Id="{fb6e5e7e-c7eb-4e45-838b-2e95dfae8fd4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HMI
+VAR
+	no_ecat_light: BOOL;
+	error_light: BOOL;
+	reset_button: BOOL;
+	actual_speed_rpm: LREAL;
+	actual_torque_nm_fast: LREAL;
+	actual_torque_nm_slow: LREAL;
+	target_error: DINT;
+	count: UDINT := 0;
+	status_light: BOOL;
+	reset_light: BOOL;
+	out_limits_light: BOOL;
+	error_output: STRING;
+	start_light: BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF(count = 100)THEN
+	//Errors Manage
+	IF((CTRL.status_word AND 16#0F)= 16#8)THEN
+		error_light := TRUE;
+		CTRL.read_error := TRUE;
+		IF(CTRL.status_word = 16#B8)THEN
+			reset_light		:= TRUE;
+		END_IF
+		IF(CTRL.status_word = 16#1038)THEN
+			out_limits_light	:= TRUE;
+		ELSE
+			out_limits_light	:= FALSE;
+		END_IF
+	END_IF
+	
+	IF (CTRL.working_counter_status = 0) THEN
+		no_ecat_light := FALSE;
+	ELSE
+		no_ecat_light := TRUE;
+	END_IF
+	
+	IF(STATE_MACHINE.timer.Q)THEN 
+		CTRL.wait := FALSE;
+	ELSE
+		CTRL.wait := TRUE;
+	END_IF
+	
+	IF (NOT(CTRL.error = 0 AND TRAJ.error = 0)) THEN 
+		error_light := TRUE;
+	ELSE
+		error_light := FALSE;
+	END_IF
+	
+	IF(CTRL.status_word.0 = 0)THEN
+		status_light := FALSE;
+		CTRL.read_error := TRUE;
+	ELSE
+		status_light := TRUE;
+		CTRL.read_error := FALSE;	
+	END_IF
+	
+	//Buttons manager
+	IF (reset_button) THEN
+		STATE_MACHINE.timer(IN:=FALSE);
+		CTRL.state_axis	:= 0;
+		CTRL.error		:= 0;
+		CTRL.control_word := 16#80;
+		CTRL.sdo		:= FALSE;
+		error_light 	:= FALSE;
+		reset_light		:= FALSE;
+		out_limits_light:= FALSE;
+		reset_button 	:= FALSE;
+	END_IF
+	
+	IF(CTRL.set_up = FALSE)THEN
+		INIT();
+		CTRL.state_axis	:= 0;
+		CTRL.active 	:= TRUE;
+	ELSE
+		CTRL.active 	:= FALSE;	
+	END_IF
+		
+	//Updates
+	actual_speed_rpm		:= MOTOR.actual_vel_rpm*MOTOR.GEAR_RATIO/1000;	
+	actual_torque_nm_fast 	:= (MOTOR.actual_torque * MOTOR.RATED_TORQUE_NM)/1000;
+	actual_torque_nm_slow 	:= actual_torque_nm_fast * DINT_TO_LREAL(MOTOR.GEAR_RATIO);
+	
+	count := 0;
+ELSE
+	count:= count + 1;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="HMI">
+      <LineId Id="787" Count="0" />
+      <LineId Id="544" Count="0" />
+      <LineId Id="566" Count="10" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="577" Count="0" />
+      <LineId Id="248" Count="2" />
+      <LineId Id="749" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="755" Count="2" />
+      <LineId Id="759" Count="1" />
+      <LineId Id="758" Count="0" />
+      <LineId Id="253" Count="1" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="593" Count="0" />
+      <LineId Id="592" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="777" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="778" Count="0" />
+      <LineId Id="581" Count="1" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="583" Count="0" />
+      <LineId Id="782" Count="0" />
+      <LineId Id="785" Count="0" />
+      <LineId Id="587" Count="0" />
+      <LineId Id="589" Count="0" />
+      <LineId Id="781" Count="0" />
+      <LineId Id="783" Count="0" />
+      <LineId Id="590" Count="0" />
+      <LineId Id="817" Count="0" />
+      <LineId Id="784" Count="0" />
+      <LineId Id="549" Count="0" />
+      <LineId Id="753" Count="0" />
+      <LineId Id="750" Count="1" />
+      <LineId Id="786" Count="0" />
+      <LineId Id="798" Count="2" />
+      <LineId Id="591" Count="0" />
+      <LineId Id="752" Count="0" />
+      <LineId Id="548" Count="0" />
+      <LineId Id="553" Count="1" />
+      <LineId Id="551" Count="0" />
+      <LineId Id="794" Count="1" />
+      <LineId Id="791" Count="0" />
+      <LineId Id="793" Count="0" />
+      <LineId Id="790" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

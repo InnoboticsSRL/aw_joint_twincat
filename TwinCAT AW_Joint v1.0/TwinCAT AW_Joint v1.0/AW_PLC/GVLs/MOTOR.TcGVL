@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="MOTOR" Id="{cc182e69-a3dc-470b-b894-7e723baac2b0}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+END_VAR
+VAR_GLOBAL
+	GEAR_RATIO				: DINT 	:= 51;
+	NOMINAL_CURRENT			: INT 	:= 38;	// [A]
+	TORQUE_CONSTANT			: INT 	:= 115; // [mNm/A]
+	actual_vel_rpm AT %I*			: DINT;		// 
+	// In per thousand of the nominal torque
+	actual_torque AT %I*			: INT;
+	actual_pos_inc AT %I*	: DINT; 		// Posizione reale [cnt]
+	RATED_TORQUE_NM: LREAL := 3;
+	RATED_SPEED_RPM: UDINT := 1400;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>
